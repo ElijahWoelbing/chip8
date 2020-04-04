@@ -1,47 +1,177 @@
+#include <SDL2/SDL.h>
+#include <stdio.h>
 #include <iostream>
-#include "Timer.cpp"
+#include "Chip8.cpp";
 
-unsigned char memory[4096];
-// reserved for the interperter 0 - 512 unsigned chars
-unsigned char* interperterStart = &memory[0x000]; // 0
-unsigned char* interperterEnd = &memory[0x1FF]; // 511
-// where program starts
-unsigned char* programMemStart = &memory[0x200]; // 512
-unsigned char* ETI_660_programMemStart = &memory[0x600]; // 1536
-unsigned char* programMemEnd = &memory[0xFFF]; // 4095
-//x * (16^2) x *(16^1) x* (16^0)
 
-// regesters
-unsigned char V0;
-unsigned char V1;
-unsigned char V2;
-unsigned char V3;
-unsigned char V4;
-unsigned char V5;
-unsigned char V6;
-unsigned char V7;
-unsigned char V8;
-unsigned char V9;
-unsigned char VA;
-unsigned char VB;
-unsigned char VC;
-unsigned char VD;
-unsigned char VE;
-unsigned char VF; // used as a flag by some instruction
-unsigned char D; // delay timer
-unsigned char ST; // sound timer
-unsigned short stack[16];
-unsigned char stackPointer;
-unsigned short I;// generally used to store memory addresses
-unsigned short programCounter;
-unsigned char screen[32][64];
-unsigned char key[16];
-int main()
+bool init();
+
+bool createWindow();
+
+bool createRenderer();
+
+const int screenWidth = 640;
+
+const int screenHeight = 320;
+
+Chip8 chip8 = Chip8();
+
+unsigned char keys[16] = {
+    SDLK_1,
+    SDLK_2,
+    SDLK_3,
+    SDLK_4,
+    SDLK_q,
+    SDLK_w,
+    SDLK_e,
+    SDLK_r,
+    SDLK_a,
+    SDLK_s,
+    SDLK_d,
+    SDLK_f,
+    SDLK_z,
+    SDLK_x,
+    SDLK_c,
+    SDLK_v,
+};
+
+SDL_Window *window;
+
+SDL_Renderer *renderer;
+
+
+int main(int argc, char* argv[])
 {
-    std:: cout << sizeof(short);
-    //game loop
-    while(true)
+    bool quit = false;
+
+    if(init())
     {
-        break;
+
+        if(createWindow() && createRenderer())
+        {
+            
+            chip8.initialize();
+            
+            chip8.loadProgram("./roms/tetris.ch8");
+
+            SDL_Event e;
+
+            while (!quit)
+            {
+                while (SDL_PollEvent(&e))
+                {
+                    if(e.type == SDL_QUIT)
+                    {
+                        
+                        quit = true;
+
+                    } else if(e.type == SDL_KEYDOWN)
+                    {
+                        for(int i = 0; i < 16; i++)
+                        {
+                            if(keys[i] == e.key.keysym.sym)
+                            {
+                                chip8.keys[i] = 1;
+                            }
+                        }
+
+                    } else if(e.type == SDL_KEYUP)
+                    {
+                        for(int i = 0; i < 16; i++)
+                        {
+                            if(keys[i] == e.key.keysym.sym)
+                            {
+                                chip8.keys[i] = 0;
+                            }
+                        }
+                    }
+                }
+
+                chip8.emulate();
+
+                if(chip8.draw)
+                {
+                    SDL_Rect pixle;
+                    for(int i = 0; i < 32; i++)
+                    {
+                        for (int j = 0; j < 64; j++)
+                        {
+                            
+                            pixle.x = j;
+                            
+                            pixle.y = i;
+                            
+                            pixle.h = 10;
+
+                            pixle.w = 10;
+                            
+                            if( chip8.screen[i + j] = 1)
+                            {
+                                SDL_SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0x00 );        
+                            } else
+                            {
+                                SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );                                    
+                            }
+                       
+                            SDL_RenderFillRect( renderer, &pixle);
+                       
+                        }
+
+                    }
+                        
+                }
+                
+                
+            }
+        }
+        
     }
+
+    SDL_DestroyWindow(window);
+
+    return 0;
+
+}
+
+bool init()
+{
+
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+    
+        std::cout<< "Unable to initialize SDL Error:" << SDL_GetError() << std::endl;
+        
+        return false;
+    
+    }
+
+    return true;
+
+}
+
+bool createWindow()
+{
+    window = SDL_CreateWindow("chip", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight, SDL_WINDOW_SHOWN);
+        
+    if(window == NULL)
+    {
+        printf("unable to create window Error: %s\n", SDL_GetError());
+
+        return false;
+    }
+
+    return true;
+}
+
+bool createRenderer()
+{
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    
+    if(renderer == NULL)
+    {
+        printf("unable to create renderer Error: %s\n", SDL_GetError());
+
+        return false;
+    }
+
+    return true;
 }
