@@ -118,8 +118,7 @@ class Chip8
         unsigned short y = (opcode & 0x00F0) >> 4;
         unsigned short kk = opcode & 0x00FF;
         unsigned short nnn = opcode & 0x0FFF;
-        std::cout << (opcode & 0xF000) << std::endl;
-        std::cout << (opcode & 0xFF) << std::endl;
+
         switch(opcode & 0xF000)
         {    
             case 0x0000:
