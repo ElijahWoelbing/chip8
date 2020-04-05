@@ -21,7 +21,7 @@ class Chip8
     unsigned short I;
     unsigned short programCounter;
     unsigned short opcode;
-    public: unsigned char screen[2040];
+    public: unsigned char screen[64*32];
     public: unsigned char keys[16];
     public: bool draw = false;
 
@@ -87,9 +87,6 @@ class Chip8
 
             file.seekg(0, file.beg);
 
-            std::cout << fileLength;
-
-
             char *buffer = new char[fileLength];
 
             file.read(buffer, fileLength);
@@ -121,7 +118,8 @@ class Chip8
         unsigned short y = (opcode & 0x00F0) >> 4;
         unsigned short kk = opcode & 0x00FF;
         unsigned short nnn = opcode & 0x0FFF;
-        
+        std::cout << (opcode & 0xF000) << std::endl;
+        std::cout << (opcode & 0xFF) << std::endl;
         switch(opcode & 0xF000)
         {    
             case 0x0000:
@@ -251,7 +249,7 @@ class Chip8
             case 0x6000:
             {
 
-                V[x] == kk;
+                V[x] = kk;
                 
                 programCounter += 2;
 
@@ -420,7 +418,7 @@ class Chip8
                         
                         std::cout << "unknown opcode: " << opcode << std::endl;
                         
-                        exit(EXIT_FAILURE);
+                        exit(3);
 
                     }   
                     
@@ -488,8 +486,8 @@ class Chip8
                 // VF is set to 1, otherwise it is set to 0. 
                 //If the sprite is positioned so part of it is outside the coordinates of the display, 
                 //it wraps around to the opposite side of the screen. 
-                unsigned short x = V[x];
-                unsigned short y = V[y];
+                unsigned short regesterX = V[x];
+                unsigned short regesterY = V[y];
                 unsigned short height = opcode & 0x000F;
                 unsigned char pixel;
                 V[0xF] = 0;
@@ -501,12 +499,11 @@ class Chip8
                     {
                         if((pixel & (0x80 >> xline)) != 0)
                         {
-                            std::cout << (x + xline + ((y + yline) * 64)) << std::endl;
-                            if(screen[(x + xline + ((y + yline) * 64))] == 1)
+                            if(screen[regesterX + xline + ((regesterY + yline) * 64)] == 1)
                             {
                                 V[0xF] = 1;
                             }
-                            screen[x + xline + ((y + yline) * 64)] ^= 1;
+                            screen[regesterX + xline + ((regesterY + yline) * 64)] ^= 1;
                         }
                     }
                 }
@@ -608,6 +605,9 @@ class Chip8
                             if(keys[i] == 1)
                             {
                                 V[x] = i;
+
+                                keyPressed = true;
+
                             }
                         }
 
@@ -629,6 +629,8 @@ class Chip8
                     // Set delay timer = Vx.
                         delayTimer = V[x];
 
+                        programCounter += 2;
+
                     }
 
                     break;
@@ -637,6 +639,8 @@ class Chip8
                     {
                     // Set sound timer = Vx.   
                         soundTimer = V[x];
+
+                        programCounter += 2;
 
                     }    
 
@@ -746,30 +750,30 @@ class Chip8
                 
                 std::cout << "unknown opcode: " << opcode << std::endl;
                 
-                exit(EXIT_FAILURE);
+                exit(3);
             
             }
             
             break;
         }
         
-        // if(delayTimer > 0){
-            
-        //     --delayTimer;
-        
-        // }
-            
-        // if(soundTimer > 0)
-        // {
-        //     if(soundTimer == 1)
-        //     {
-                
-        //         printf("BEEP!\n");
-                
-        //         --soundTimer;
-            
-        //     }
-        // }       
+        if(delayTimer > 0){
+         
+            --delayTimer;
+       
+        }
+         
+        if(soundTimer > 0)
+        {
+            if(soundTimer == 1)
+            {
+             
+                printf("BEEP!\n");
+             
+                --soundTimer;
+         
+            }
+        }       
         
     }
 };

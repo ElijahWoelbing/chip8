@@ -1,6 +1,8 @@
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdio.h>
 #include <iostream>
+#include <chrono>
+#include <thread>
 #include "Chip8.cpp";
 
 
@@ -10,9 +12,9 @@ bool createWindow();
 
 bool createRenderer();
 
-const int screenWidth = 640;
+const int screenWidth = 1024;
 
-const int screenHeight = 320;
+const int screenHeight = 512;
 
 Chip8 chip8 = Chip8();
 
@@ -48,11 +50,15 @@ int main(int argc, char* argv[])
     {
 
         if(createWindow() && createRenderer())
-        {
-            
+        {    
             chip8.initialize();
             
-            chip8.loadProgram("./roms/tetris.ch8");
+            chip8.loadProgram("../roms/Tetris.ch8");
+
+            SDL_Texture* sdlTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+                64, 32);
+
+            unsigned int pixels[2048];
 
             SDL_Event e;
 
@@ -91,37 +97,24 @@ int main(int argc, char* argv[])
 
                 if(chip8.draw)
                 {
-                    SDL_Rect pixle;
-                    for(int i = 0; i < 32; i++)
+                    chip8.draw = false;
+
+                    for (int i = 0; i < 2048; i++)
                     {
-                        for (int j = 0; j < 64; j++)
-                        {
-                            
-                            pixle.x = j;
-                            
-                            pixle.y = i;
-                            
-                            pixle.h = 10;
-
-                            pixle.w = 10;
-                            
-                            if( chip8.screen[i + j] = 1)
-                            {
-                                SDL_SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0x00 );        
-                            } else
-                            {
-                                SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );                                    
-                            }
-                       
-                            SDL_RenderFillRect( renderer, &pixle);
-                       
-                        }
-
+                        unsigned int pixel = chip8.screen[i];
+                        pixels[i] = (0x00FFFFFF * pixel) | 0xFF000000;
                     }
+
+                    // Update SDL texture
+                    SDL_UpdateTexture(sdlTexture, NULL, pixels, 64 * sizeof(Uint32));
+                    // Clear screen and render
+                    SDL_RenderClear(renderer);
+                    SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
+                    SDL_RenderPresent(renderer);
                         
                 }
                 
-                
+                std::this_thread::sleep_for(std::chrono::microseconds(1200));
             }
         }
         
@@ -150,7 +143,7 @@ bool init()
 
 bool createWindow()
 {
-    window = SDL_CreateWindow("chip", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("chip8", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight, SDL_WINDOW_SHOWN);
         
     if(window == NULL)
     {
@@ -164,7 +157,7 @@ bool createWindow()
 
 bool createRenderer()
 {
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, 0);
     
     if(renderer == NULL)
     {
@@ -172,6 +165,7 @@ bool createRenderer()
 
         return false;
     }
-
+    SDL_RenderSetLogicalSize(renderer, screenWidth, screenHeight);
     return true;
 }
+
