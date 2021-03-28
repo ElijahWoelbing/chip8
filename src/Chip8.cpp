@@ -305,23 +305,24 @@ class Chip8
                  VF is set to 1, otherwise it is set to 0. 
                 If the sprite is positioned so part of it is outside the coordinates of the display, 
                 it wraps around to the opposite side of the screen. */
-                unsigned short regesterX = V[x];
-                unsigned short regesterY = V[y];
-                unsigned short height = opcode & 0x000F;
-                unsigned char pixel;
+                unsigned short Xpos = V[x];
+                unsigned short Ypos = V[y];
+                unsigned short spriteBytes = opcode & 0x000F;
+                unsigned char spriteByte;
                 V[0xF] = 0;
-                for (int yline = 0; yline < height; yline++)
+                for (int spriteRow = 0; spriteRow < spriteBytes; spriteRow++)
                 {
-                    pixel = memory[I + yline];
-                    for(int xline = 0; xline < 8; xline++)
+                    spriteByte = memory[I + spriteRow];
+                    for(int spriteCol = 0; spriteCol < 8; spriteCol++)
                     {
-                        if((pixel & (0x80 >> xline)) != 0)
+                        if((spriteByte & (0x80 >> spriteCol)) != 0)
                         {
-                            if(screen[regesterX + xline + ((regesterY + yline) * 64)] == 1)
+                            unsigned int pixelPos = (Xpos + spriteCol + ((Ypos + spriteRow) * 64)) % 2048;
+                            if(screen[pixelPos] == 1)
                             {
                                 V[0xF] = 1;
                             }
-                            screen[regesterX + xline + ((regesterY + yline) * 64)] ^= 1;
+                            screen[pixelPos] ^= 1;
                         }
                     }
                 }
