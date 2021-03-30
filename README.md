@@ -1,5 +1,5 @@
 # chip8-emulator
-c++ chip8 emulator
+c++ chip8 emulator using SDL2 for display
 
 ### Photos
 ![tetris image](https://github.com/ElijahWoelbing/chip8-emulator/blob/master/chip8-tetris.png)
